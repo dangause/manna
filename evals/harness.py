@@ -202,6 +202,18 @@ def strip_cheatsheet(description: str) -> str:
 # descriptions or the model's own priors — the clean test for experiment (a).
 _DISCOVERY_TOOLS = {"vo_archive_list", "vo_schema_describe"}
 
+# Env-driven tool-ablation seam: EVAL_EXCLUDE_TOOLS is a comma-separated list of
+# tool names withheld from the agent's tool surface for a with/without value-add
+# A/B (e.g. the purpose-built facades vo_count_observations,vo_survey_target,
+# vo_inspect_table). Read per call so a single process picks up the current env;
+# unset/empty => nothing excluded (default = the full shipped tool set).
+_EXCLUDE_TOOLS_ENV = "EVAL_EXCLUDE_TOOLS"
+
+
+def _excluded_tools() -> set[str]:
+    raw = os.getenv(_EXCLUDE_TOOLS_ENV, "")
+    return {name.strip() for name in raw.split(",") if name.strip()}
+
 
 def _anthropic_tools(
     mcp_tools, inject_notes: bool = True, no_discovery: bool = False
@@ -213,10 +225,15 @@ def _anthropic_tools(
       False STRIPS it, which is how experiment (a) isolates the injection's value.
     - ``no_discovery``: withhold the curated-knowledge tools (vo_archive_list,
       vo_schema_describe) so the model can't consult them.
+    - ``EVAL_EXCLUDE_TOOLS`` (env): additionally withhold any named tools — the
+      seam for the purpose-built-tools value-add A/B (with vs without).
     """
+    excluded = _excluded_tools()
     out = []
     for t in mcp_tools:
         if no_discovery and t.name in _DISCOVERY_TOOLS:
+            continue
+        if t.name in excluded:
             continue
         desc = t.description or ""
         if not inject_notes and t.name == "vo_tap_query":
