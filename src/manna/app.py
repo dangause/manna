@@ -22,6 +22,7 @@ from manna.tools import (
     vo_registry_search,
     vo_schema_describe,
     vo_sia_search,
+    vo_survey_target,
     vo_tap_abort,
     vo_tap_query,
     vo_tap_results,
@@ -106,6 +107,7 @@ def build_mcp() -> FastMCP:
     mcp.tool(vo_sia_search, annotations=_REMOTE)
     mcp.tool(vo_find_observations, annotations=_REMOTE)
     mcp.tool(vo_count_observations, annotations=_REMOTE)
+    mcp.tool(vo_survey_target, annotations=_REMOTE)
     return mcp
 
 

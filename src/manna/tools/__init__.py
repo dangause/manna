@@ -19,6 +19,7 @@ from manna.tools.registry import vo_registry_describe, vo_registry_search
 from manna.tools.resolver import vo_target_resolve
 from manna.tools.schema import vo_schema_describe
 from manna.tools.sia import vo_sia_search
+from manna.tools.survey import vo_survey_target
 from manna.tools.tap import vo_tap_abort, vo_tap_query, vo_tap_results, vo_tap_status
 
 __all__ = [
@@ -30,6 +31,7 @@ __all__ = [
     "vo_registry_search",
     "vo_schema_describe",
     "vo_sia_search",
+    "vo_survey_target",
     "vo_tap_abort",
     "vo_tap_query",
     "vo_tap_results",
