@@ -7,15 +7,13 @@ actually accepts. It covers the three geometry dialects that the fake tests can
 only assert as strings:
 
   * datalab — q3c_radial_query on nsc_dr2.object (sync)
+  * gaia    — CONTAINS(POINT, CIRCLE) on gaiadr3.gaia_source (sync)
   * alma    — INTERSECTS(s_region) + COUNT(DISTINCT member_ous_uid) (sync)
 
-The CONTAINS/POINT dialect (gaia / eso / nrao) is NOT recorded here: every
-archive that uses it is currently async or unavailable for a *deterministic*
-sync cassette — gaia's ESAC endpoint was in scheduled downtime at record time,
-and eso/nrao promote a spatial obscore COUNT to async (a full-table scan that
-outruns the sync budget). That dialect stays covered offline by the pure-
-predicate, recipe, and faked-backend tests; its live/async path is smoke-checked
-out-of-band. NRAO's async count is likewise excluded for non-determinism.
+NRAO is excluded (its obscore count runs async with a load-dependent bounded
+poll, so a recorded cassette would be non-deterministic; its live async path is
+smoke-checked out-of-band). ESO is excluded for the same reason — its spatial
+obscore COUNT is a full-table scan that promotes to async.
 
 Re-record with:  uv run pytest --record-mode=once -k count_observations_live
 """
@@ -24,8 +22,11 @@ import pytest
 from fastmcp import Client
 
 # (target, waveband, archive-override, expected chosen archive, ADQL substring).
+# `waveband="optical"` alone selects the highest-priority optical archive
+# (datalab, priority 10), so gaia is reached via an explicit archive override.
 CASES = {
     "datalab_q3c": ("M87", "optical", None, "datalab", "q3c_radial_query"),
+    "gaia_contains": ("NGC 253", None, "gaia", "gaia", "CONTAINS(POINT("),
     "alma_intersects": ("NGC 253", "millimeter", None, "alma", "INTERSECTS(CIRCLE("),
 }
 
