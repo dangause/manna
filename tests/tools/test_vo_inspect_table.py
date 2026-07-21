@@ -49,6 +49,35 @@ def test_inspect_returns_columns_enums_and_sample(known_datalab, monkeypatch):
     assert out["sample_rows"] and out["sample_rows"][0]["ra"] == pytest.approx(187.7)
 
 
+def test_inspect_sample_rows_are_json_safe(known_datalab, monkeypatch):
+    """Real archive rows carry masked (missing), bytes, and non-finite cells;
+    the sample must coerce them to JSON-safe scalars or the MCP structured
+    output breaks (regression: masked pmra/pmdec on nsc_dr2.object)."""
+    import json
+
+    import numpy as np
+
+    cols = Table({"column_name": ["pmra", "flags", "name"], "datatype": ["double", "int", "char"]})
+    # A masked cell (missing value), a NaN, and a bytes value — all non-JSON.
+    sample = Table(
+        {
+            "pmra": np.ma.MaskedArray([1.0], mask=[True]),  # masked → null
+            "flags": [float("nan")],  # non-finite → null
+            "name": [b"NSC J1234"],  # bytes → str
+        }
+    )
+    monkeypatch.setattr(inspect_mod, "_get_tap", lambda: _Tap(cols=cols, sample=sample))
+    monkeypatch.setattr(inspect_mod, "lookup_schema", lambda *, archive, table: None)
+
+    out = inspect_mod.vo_inspect_table(table="nsc_dr2.object", archive="datalab", sample_rows=1)
+
+    row = out["sample_rows"][0]
+    assert row["pmra"] is None
+    assert row["flags"] is None
+    assert row["name"] == "NSC J1234"
+    json.dumps(out)  # must not raise — the whole payload is JSON-serializable
+
+
 def test_inspect_sample_soft_fails_on_error(known_datalab, monkeypatch):
     from manna.errors import ArchiveError
 

@@ -8,6 +8,7 @@ sample_status='error', never a hard failure). A convenience layer over
 vo_schema_describe; drop to it + vo_tap_query for full control.
 """
 
+import math
 from typing import Annotated
 
 import numpy as np
@@ -56,8 +57,22 @@ def _fetch_sample(endpoint: str, table: str, n: int) -> tuple[list[dict], str]:
 
 
 def _jsonify(v):
+    """Coerce one astropy-Table cell to a JSON-safe scalar.
+
+    Real archive rows carry values a bare ``dict`` cannot ship as MCP
+    structured output: masked cells (missing values), numpy scalar types, raw
+    ``bytes``, and non-finite floats (NaN/inf, which are not valid JSON). Each
+    maps to its honest JSON form — missing/non-finite → ``null`` — so a wide
+    table with nulls (the common case) never breaks the tool's output schema.
+    """
+    if v is None or v is np.ma.masked or isinstance(v, np.ma.core.MaskedConstant):
+        return None
     if isinstance(v, np.generic):
-        return v.item()
+        v = v.item()
+    if isinstance(v, bytes):
+        return v.decode("utf-8", "replace")
+    if isinstance(v, float) and not math.isfinite(v):
+        return None
     return v
 
 
