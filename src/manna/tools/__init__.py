@@ -15,6 +15,7 @@ from manna.tools.archives import vo_archive_list
 from manna.tools.cone import vo_cone_search
 from manna.tools.count import vo_count_observations
 from manna.tools.find_observations import vo_find_observations
+from manna.tools.inspect import vo_inspect_table
 from manna.tools.registry import vo_registry_describe, vo_registry_search
 from manna.tools.resolver import vo_target_resolve
 from manna.tools.schema import vo_schema_describe
@@ -27,6 +28,7 @@ __all__ = [
     "vo_cone_search",
     "vo_count_observations",
     "vo_find_observations",
+    "vo_inspect_table",
     "vo_registry_describe",
     "vo_registry_search",
     "vo_schema_describe",
