@@ -13,6 +13,7 @@ One tool per IVOA standard, split by protocol:
 # Re-exports so `from manna.tools import vo_tap_query` still works.
 from manna.tools.archives import vo_archive_list
 from manna.tools.cone import vo_cone_search
+from manna.tools.count import vo_count_observations
 from manna.tools.find_observations import vo_find_observations
 from manna.tools.registry import vo_registry_describe, vo_registry_search
 from manna.tools.resolver import vo_target_resolve
@@ -23,6 +24,7 @@ from manna.tools.tap import vo_tap_abort, vo_tap_query, vo_tap_results, vo_tap_s
 __all__ = [
     "vo_archive_list",
     "vo_cone_search",
+    "vo_count_observations",
     "vo_find_observations",
     "vo_registry_describe",
     "vo_registry_search",
