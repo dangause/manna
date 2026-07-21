@@ -10,10 +10,12 @@ vo_schema_describe; drop to it + vo_tap_query for full control.
 
 from typing import Annotated
 
+import numpy as np
 from pydantic import Field
 
-from manna.archives._endpoints import by_short_name
+from manna.archives._endpoints import active_archives, by_short_name
 from manna.archives._knowledge import lookup_schema, schema_to_dict
+from manna.archives._model import Archive
 from manna.backends.tap import TapClient
 from manna.config import get_settings
 from manna.errors import ToolExecutionError, ValidationError, wrap_tool_errors
@@ -21,6 +23,18 @@ from manna.tools._constants import _ERROR_DOCSTRING
 from manna.tools.schema import _column_recipe, _fetch_columns
 
 _tap: TapClient | None = None
+
+
+def _infer_archive(table: str) -> Archive | None:
+    """First active archive (priority order) whose curated knowledge names
+    `table` — via a matching `Schema.table` or a `notable_tables` entry —
+    and which has a `tap_url`. None if nothing matches."""
+    for a in active_archives():
+        if a.tap_url is None:
+            continue
+        if table in a.notable_tables or any(s.table == table for s in a.schemas):
+            return a
+    return None
 
 
 def _get_tap() -> TapClient:
@@ -42,13 +56,8 @@ def _fetch_sample(endpoint: str, table: str, n: int) -> tuple[list[dict], str]:
 
 
 def _jsonify(v):
-    try:
-        import numpy as np
-
-        if isinstance(v, np.generic):
-            return v.item()
-    except Exception:  # noqa: BLE001
-        pass
+    if isinstance(v, np.generic):
+        return v.item()
     return v
 
 
@@ -92,9 +101,14 @@ def vo_inspect_table(
     if not table_clean:
         raise ValidationError(message="'table' must be non-empty (fully qualified).")
 
-    # Resolve owning archive: explicit, else via curated schema lookup across actives.
-    arch_name = archive.strip() if archive else None
-    known = by_short_name(arch_name) if arch_name else None
+    # Resolve owning archive: explicit, else INFERRED from curated knowledge
+    # (Schema.table / notable_tables) across the active archives.
+    if archive:
+        arch_name = archive.strip()
+        known = by_short_name(arch_name)
+    else:
+        known = _infer_archive(table_clean)
+        arch_name = known.short_name if known else None
     schema = lookup_schema(archive=arch_name, table=table_clean) if arch_name else None
 
     if known is None or known.tap_url is None:

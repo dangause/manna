@@ -81,3 +81,77 @@ def test_inspect_unknown_archive_soft_fails(monkeypatch):
     out = inspect_mod.vo_inspect_table(table="foo.bar", archive="nope")
     assert out["known"] is False
     assert "hint" in out
+
+
+def test_inspect_infers_archive_from_schema_when_archive_omitted(monkeypatch):
+    """No `archive` arg: inferred via a matching Schema.table entry."""
+    from manna.archives._model import Archive, Schema
+
+    matching = Archive(
+        short_name="datalab",
+        display_name="Data Lab",
+        host_substrings=("d.x",),
+        tap_url="http://d/tap",
+        schemas=(Schema(archive="datalab", table="nsc_dr2.object"),),
+    )
+    other = Archive(
+        short_name="nrao",
+        display_name="NRAO",
+        host_substrings=("n.x",),
+        tap_url="http://n/tap",
+    )
+    monkeypatch.setattr(inspect_mod, "active_archives", lambda: (other, matching))
+    monkeypatch.setattr(inspect_mod, "lookup_schema", lambda *, archive, table: matching.schemas[0])
+
+    cols = Table({"column_name": ["ra", "dec"], "datatype": ["double", "double"]})
+    monkeypatch.setattr(inspect_mod, "_get_tap", lambda: _Tap(cols=cols, sample=Table({})))
+
+    out = inspect_mod.vo_inspect_table(table="nsc_dr2.object", sample_rows=0)
+
+    assert out["archive"] == "datalab"
+    assert out["known"] is True
+    assert {"name": "ra", "datatype": "double"} in out["columns"]
+
+
+def test_inspect_infers_archive_from_notable_tables_when_archive_omitted(monkeypatch):
+    """No `archive` arg: inferred via `notable_tables` (no curated Schema entry)."""
+    from manna.archives._model import Archive
+
+    matching = Archive(
+        short_name="alma",
+        display_name="ALMA",
+        host_substrings=("a.x",),
+        tap_url="http://a/tap",
+        notable_tables=("tap_schema.obscore",),
+    )
+    monkeypatch.setattr(inspect_mod, "active_archives", lambda: (matching,))
+    monkeypatch.setattr(inspect_mod, "lookup_schema", lambda *, archive, table: None)
+
+    cols = Table({"column_name": ["s_ra"], "datatype": ["double"]})
+    monkeypatch.setattr(inspect_mod, "_get_tap", lambda: _Tap(cols=cols, sample=Table({})))
+
+    out = inspect_mod.vo_inspect_table(table="tap_schema.obscore", sample_rows=0)
+
+    assert out["archive"] == "alma"
+    assert out["known"] is False  # no curated Schema, but archive was still inferred
+    assert {"name": "s_ra", "datatype": "double"} in out["columns"]
+
+
+def test_inspect_no_match_and_no_archive_soft_fails(monkeypatch):
+    """No `archive` arg and nothing in curated knowledge references the table."""
+    from manna.archives._model import Archive
+
+    unrelated = Archive(
+        short_name="datalab",
+        display_name="Data Lab",
+        host_substrings=("d.x",),
+        tap_url="http://d/tap",
+    )
+    monkeypatch.setattr(inspect_mod, "active_archives", lambda: (unrelated,))
+    monkeypatch.setattr(inspect_mod, "lookup_schema", lambda *, archive, table: None)
+
+    out = inspect_mod.vo_inspect_table(table="totally.unknown")
+
+    assert out["known"] is False
+    assert out["archive"] is None
+    assert "hint" in out
