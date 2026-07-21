@@ -67,8 +67,13 @@ def _rank_candidates(*, service: str, waveband: str | None, override: str | None
 def _no_candidate_payload(*, service: str, waveband: str | None, override: str | None) -> dict:
     """Recovery hint when no active archive matches — never a hard failure."""
     attr = "sia_url" if service == "image" else "scs_url"
+    servicetype = "sia" if service == "image" else "scs"
     return _select.no_candidate_payload(
-        attr=attr, service_label=f"a {service} service", waveband=waveband, override=override
+        attr=attr,
+        service_label=f"a {service} service",
+        waveband=waveband,
+        override=override,
+        servicetype=servicetype,
     )
 
 

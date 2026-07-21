@@ -154,9 +154,11 @@ def test_async_budget_exhausted_returns_pending(monkeypatch):
 
     get_settings.cache_clear()
     monkeypatch.setenv("MANNA_COUNT_ASYNC_BUDGET_SECONDS", "2")
-
-    out = count_mod.vo_count_observations(target="200.0 20.0", waveband="radio")
-    assert out["status"] == "pending"
-    assert out["count"] is None
-    assert out["job_url"].startswith("http")
-    assert "next_steps" in out
+    try:
+        out = count_mod.vo_count_observations(target="200.0 20.0", waveband="radio")
+        assert out["status"] == "pending"
+        assert out["count"] is None
+        assert out["job_url"].startswith("http")
+        assert "next_steps" in out
+    finally:
+        get_settings.cache_clear()

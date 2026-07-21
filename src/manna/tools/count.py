@@ -158,7 +158,11 @@ def vo_count_observations(
     candidates = _select.rank_by_attr(attr="count_target", waveband=waveband, override=archive)
     if not candidates:
         return _select.no_candidate_payload(
-            attr="count_target", service_label="counting", waveband=waveband, override=archive
+            attr="count_target",
+            service_label="counting",
+            waveband=waveband,
+            override=archive,
+            servicetype="tap",
         )
 
     chosen = candidates[0]

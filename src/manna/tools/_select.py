@@ -56,7 +56,12 @@ def rank_by_attr(*, attr: str, waveband: str | None, override: str | None) -> li
 
 
 def no_candidate_payload(
-    *, attr: str, service_label: str, waveband: str | None, override: str | None
+    *,
+    attr: str,
+    service_label: str,
+    waveband: str | None,
+    override: str | None,
+    servicetype: str | None = None,
 ) -> dict:
     """Recovery hint when no active archive matches — never a hard failure."""
     capable = [a for a in active_archives() if getattr(a, attr)]
@@ -67,11 +72,14 @@ def no_candidate_payload(
     if override is not None:
         filt.append(f"archive={override!r}")
     filt_text = " and ".join(filt) if filt else "the given filter"
+    registry_hint = (
+        f"vo_registry_search(servicetype={servicetype!r})" if servicetype else "vo_registry_search"
+    )
     return {
         "count": 0,
         "hint": (
             f"No known archive offers {service_label} matching {filt_text}. "
             f"Archives that do: {known}. Relax the filter, pass an explicit "
-            f"`archive`, or discover more via vo_registry_search."
+            f"`archive`, or discover more via {registry_hint}."
         ),
     }

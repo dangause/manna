@@ -42,3 +42,26 @@ def test_no_candidate_payload_names_capable(monkeypatch):
     )
     assert out["count"] == 0
     assert "a" in out["hint"]
+
+
+def test_no_candidate_payload_scopes_registry_hint_when_servicetype_given(monkeypatch):
+    archives = (_a("a", waveband="radio", count=True),)
+    monkeypatch.setattr(sel, "active_archives", lambda: archives)
+    out = sel.no_candidate_payload(
+        attr="count_target",
+        service_label="count",
+        waveband="optical",
+        override=None,
+        servicetype="tap",
+    )
+    assert "vo_registry_search(servicetype='tap')" in out["hint"]
+
+
+def test_no_candidate_payload_bare_registry_hint_when_servicetype_omitted(monkeypatch):
+    archives = (_a("a", waveband="radio", count=True),)
+    monkeypatch.setattr(sel, "active_archives", lambda: archives)
+    out = sel.no_candidate_payload(
+        attr="count_target", service_label="count", waveband="optical", override=None
+    )
+    assert "vo_registry_search(servicetype=" not in out["hint"]
+    assert "vo_registry_search" in out["hint"]
