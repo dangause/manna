@@ -83,6 +83,7 @@ def test_sync_count_returns_integer(one_optical, monkeypatch):
     out = count_mod.vo_count_observations(target="M87", waveband="optical")
 
     assert out["count"] == 842
+    assert out["status"] == "ok"
     assert out["plan"]["chosen_archive"] == "datalab"
     assert "q3c_radial_query" in out["plan"]["adql"]
     assert out["resolved"]["ra"] == pytest.approx(187.7)

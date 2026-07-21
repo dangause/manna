@@ -99,6 +99,13 @@ def test_every_tool_in_dunder_all_is_registered_in_build_mcp():
     )
 
 
+def test_all_tools_tuple_matches_dunder_all():
+    """ALL_TOOLS (used to parametrize the contract tests below) must cover
+    exactly the tools declared in tools/__init__.__all__ — otherwise a newly
+    added tool silently skips every contract check in this file."""
+    assert {t.__name__ for t in ALL_TOOLS} == set(REGISTERED_TOOL_NAMES)
+
+
 def test_all_registered_tools_use_vo_prefix():
     """Project convention: every tool name starts with `vo_`."""
     for name in _registered_tool_names():

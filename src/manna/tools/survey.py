@@ -34,6 +34,9 @@ def vo_survey_target(
     wavebands: Annotated[
         list[str] | None,
         Field(
+            # An empty list is treated the same as None (no filter, all
+            # countable archives) — the safe default rather than "match
+            # nothing".
             description="Optional list of wavebands to restrict the fan-out.",
             examples=[["radio", "optical"]],
         ),
@@ -69,6 +72,9 @@ def vo_survey_target(
         archives = [a for a in archives if (a.waveband or "").lower() in wb_filter]
 
     rows: list[dict] = []
+    # Sequential by design: each backend call is a blocking pyvo round-trip, so
+    # worst-case latency here is the SUM of every archive's async count budget,
+    # not the max. Parallelizing would need threads (pyvo has no async client).
     for a in archives:
         ct = a.count_target
         assert ct is not None and a.tap_url is not None
@@ -82,7 +88,18 @@ def vo_survey_target(
             adql = build_count_adql(ct, ra, dec, radius_deg)
             res = _run_count(endpoint=a.tap_url, adql=adql, mode=ct.mode)
             if res["status"] == "pending":
-                row.update(status="pending", count=None, job_url=res["job_url"])
+                row.update(
+                    status="pending",
+                    count=None,
+                    job_url=res["job_url"],
+                    job_id=res["job_id"],
+                    next_steps=(
+                        f"The count is running async as job {res['job_id']}. Poll "
+                        f"vo_tap_status(job_id='{res['job_id']}') until phase=COMPLETED, "
+                        f"then vo_tap_results(job_id='{res['job_id']}') for the single "
+                        f"count row."
+                    ),
+                )
             else:
                 row.update(status="ok", count=res["count"])
         except ToolExecutionError as err:

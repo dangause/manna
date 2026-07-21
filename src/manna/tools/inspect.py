@@ -95,7 +95,10 @@ def vo_inspect_table(
     `notes`, and `sample_rows` (best-effort — `sample_status` ∈ {ok, error,
     disabled}). Reliable metadata is always returned even if the sample fails
     (some archives reject unfiltered reads). Soft-fails (`known: false` + hint)
-    when the table/archive can't be identified.
+    when the table/archive can't be identified. Note `known` means "has
+    curated schema knowledge" (same convention as vo_schema_describe), NOT
+    "table identified" — for a known archive/endpoint the column list is
+    still returned even when `known` is false.
     """
     table_clean = table.strip()
     if not table_clean:

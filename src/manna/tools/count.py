@@ -199,7 +199,7 @@ def vo_count_observations(
             ),
         }
 
-    return {"count": result["count"], "resolved": resolved, "plan": plan}
+    return {"status": "ok", "count": result["count"], "resolved": resolved, "plan": plan}
 
 
 vo_count_observations.__doc__ = (vo_count_observations.__doc__ or "") + _ERROR_DOCSTRING
