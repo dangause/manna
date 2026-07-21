@@ -46,7 +46,8 @@ def vo_survey_target(
 
     Resolves the target, then runs each countable archive's curated positional
     COUNT and returns one row per archive: {archive, display_name, waveband,
-    table, count, status, [job_url]}. `status` ∈ {ok, pending, error} is
+    table, count, status, [job_url, job_id, next_steps]}. `status` ∈ {ok,
+    pending, error} is
     always explicit — never a silent zero. A `summary` block totals
     archives_with_data / wavebands / pending / errors. Soft-fails (no
     error_class) on an unresolvable target. For a single archive with finer
