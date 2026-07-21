@@ -11,7 +11,7 @@ from typing import Annotated
 from pydantic import Field
 
 from manna.archives._count import build_count_adql
-from manna.errors import ToolExecutionError, wrap_tool_errors
+from manna.errors import ToolExecutionError, ValidationError, wrap_tool_errors
 from manna.tools import _select
 from manna.tools._constants import _ERROR_DOCSTRING
 from manna.tools.count import _run_count
@@ -43,13 +43,18 @@ def vo_survey_target(
 
     Resolves the target, then runs each countable archive's curated positional
     COUNT and returns one row per archive: {archive, display_name, waveband,
-    table, count, status, [job_url]}. `status` ∈ {ok, empty, pending, error} is
+    table, count, status, [job_url]}. `status` ∈ {ok, pending, error} is
     always explicit — never a silent zero. A `summary` block totals
     archives_with_data / wavebands / pending / errors. Soft-fails (no
     error_class) on an unresolvable target. For a single archive with finer
     control, drop to vo_count_observations or vo_tap_query.
     """
     target_clean = target.strip()
+    if not target_clean:
+        raise ValidationError(
+            message="'target' must be non-empty. Provide an object name or 'RA DEC'."
+        )
+
     ra, dec = _select.coerce_or_resolve(target_clean)
     if ra is None or dec is None:
         return {

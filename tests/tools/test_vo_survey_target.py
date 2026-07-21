@@ -90,3 +90,13 @@ def test_survey_unresolvable_soft_fails(fleet, monkeypatch):
     )
     out = survey_mod.vo_survey_target(target="XYZZY")
     assert out["resolved"] is False
+
+
+def test_survey_empty_target_validation_error(fleet):
+    out = survey_mod.vo_survey_target(target="")
+    assert out.get("error_class") == "validation_error"
+
+
+def test_survey_whitespace_target_validation_error(fleet):
+    out = survey_mod.vo_survey_target(target="   ")
+    assert out.get("error_class") == "validation_error"
