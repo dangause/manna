@@ -215,6 +215,43 @@ def _excluded_tools() -> set[str]:
     return {name.strip() for name in raw.split(",") if name.strip()}
 
 
+# Markers of a TRANSIENT endpoint failure (shared vLLM connection blip / timeout)
+# — distinct from a real model/tool error. Matched on the exception's class name +
+# message so we don't depend on a specific SDK's exception classes. A run that hits
+# one of these is retried rather than scored as a task failure, which otherwise
+# silently biases an ablation arm that happens to run during a flaky window.
+_TRANSIENT_MARKERS = (
+    "APIConnectionError",
+    "APITimeoutError",
+    "Connection error",
+    "timed out",
+    "Timeout",
+    "Overloaded",
+)
+
+
+def _is_transient(exc: BaseException) -> bool:
+    s = f"{type(exc).__name__}: {exc}"
+    return any(m in s for m in _TRANSIENT_MARKERS)
+
+
+async def _complete_with_retry(
+    model, system, convo, tools, *, attempts: int = 3, backoff: float = 2.0
+):
+    """`model.complete`, retried on transient endpoint errors with linear backoff.
+
+    Non-transient exceptions propagate immediately; the last attempt re-raises so a
+    persistent outage still surfaces as the run's error (never silently swallowed).
+    """
+    for i in range(attempts):
+        try:
+            return await model.complete(system, convo, tools)
+        except Exception as exc:  # noqa: BLE001 — re-raised unless transient + attempts left
+            if i == attempts - 1 or not _is_transient(exc):
+                raise
+            await asyncio.sleep(backoff * (i + 1))
+
+
 def _anthropic_tools(
     mcp_tools, inject_notes: bool = True, no_discovery: bool = False
 ) -> list[dict[str, Any]]:
@@ -325,7 +362,7 @@ async def run_task(
                 convo: list[dict[str, Any]] = [{"role": "user", "text": task["prompt"]}]
                 for step in range(max_steps):
                     run.steps = step + 1
-                    comp = await model.complete(SYSTEM_PROMPT, convo, tools)
+                    comp = await _complete_with_retry(model, SYSTEM_PROMPT, convo, tools)
                     run.input_tokens += comp.input_tokens
                     run.output_tokens += comp.output_tokens
                     convo.append(
