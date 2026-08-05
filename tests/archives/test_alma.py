@@ -75,7 +75,7 @@ def test_converted_probeable_audits():
 
 
 def test_alma_count_target_uses_distinct_ous():
-    from astro_archives_mcp.archives._count import CountTarget, IntersectsRegion
+    from manna.archives._count import CountTarget, IntersectsRegion
 
     ct = ARCHIVE.count_target
     assert isinstance(ct, CountTarget)

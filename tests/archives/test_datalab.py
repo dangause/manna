@@ -45,7 +45,7 @@ def test_geometry_note_audits_expect_error():
 
 
 def test_datalab_count_target():
-    from astro_archives_mcp.archives._count import CountTarget, Q3CRadial
+    from manna.archives._count import CountTarget, Q3CRadial
 
     ct = ARCHIVE.count_target
     assert isinstance(ct, CountTarget)

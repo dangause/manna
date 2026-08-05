@@ -46,9 +46,8 @@ def vo_survey_target(
 
     Resolves the target, then runs each countable archive's curated positional
     COUNT and returns one row per archive: {archive, display_name, waveband,
-    table, count, status, [job_url, job_id, next_steps]}. `status` ∈ {ok,
-    pending, error} is
-    always explicit — never a silent zero. A `summary` block totals
+    table, count, status, [job_url, next_steps]}. `status` ∈ {ok, pending,
+    error} is always explicit — never a silent zero. A `summary` block totals
     archives_with_data / wavebands / pending / errors. Soft-fails (no
     error_class) on an unresolvable target. For a single archive with finer
     control, drop to vo_count_observations or vo_tap_query.
@@ -93,12 +92,12 @@ def vo_survey_target(
                     status="pending",
                     count=None,
                     job_url=res["job_url"],
-                    job_id=res["job_id"],
                     next_steps=(
-                        f"The count is running async as job {res['job_id']}. Poll "
-                        f"vo_tap_status(job_id='{res['job_id']}') until phase=COMPLETED, "
-                        f"then vo_tap_results(job_id='{res['job_id']}') for the single "
-                        f"count row."
+                        f"The count is running async as job_url='{res['job_url']}'. Poll "
+                        f"vo_tap_status(job_url='{res['job_url']}') until phase=COMPLETED, "
+                        f"then vo_tap_results(job_url='{res['job_url']}') for the single "
+                        f"count row. Pass the job_url back verbatim — it is the job's only "
+                        f"handle."
                     ),
                 )
             else:

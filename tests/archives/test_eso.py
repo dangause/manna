@@ -24,7 +24,7 @@ def test_obscore_note_audit():
 
 
 def test_eso_count_target():
-    from astro_archives_mcp.archives._count import ContainsPoint, CountTarget
+    from manna.archives._count import ContainsPoint, CountTarget
 
     ct = ARCHIVE.count_target
     assert isinstance(ct, CountTarget)

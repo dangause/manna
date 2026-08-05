@@ -54,7 +54,7 @@ def test_survey_aggregates_all_countable(fleet, monkeypatch):
     assert by["datalab"]["count"] == 842 and by["datalab"]["status"] == "ok"
     assert by["alma"]["count"] == 37
     assert by["nrao"]["status"] == "pending" and by["nrao"]["job_url"] == "http://nrao/job/1"
-    assert by["nrao"]["job_id"] == "j1"
+    assert "next_steps" in by["nrao"]
     assert out["summary"]["archives_with_data"] == 2
     assert out["summary"]["pending"] == 1
     assert set(out["summary"]["wavebands"]) == {"optical", "millimeter"}

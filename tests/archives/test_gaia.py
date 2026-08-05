@@ -28,7 +28,7 @@ def test_gaia_ari_is_scs_only():
 
 
 def test_gaia_count_target():
-    from astro_archives_mcp.archives._count import ContainsPoint, CountTarget
+    from manna.archives._count import ContainsPoint, CountTarget
 
     ct = GAIA.count_target
     assert isinstance(ct, CountTarget)

@@ -1,5 +1,5 @@
-from astro_archives_mcp.archives._count import CountTarget, Q3CRadial
-from astro_archives_mcp.archives._model import Archive
+from manna.archives._count import CountTarget, Q3CRadial
+from manna.archives._model import Archive
 
 
 def test_archive_count_target_defaults_none():

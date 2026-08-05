@@ -1,4 +1,4 @@
-from astro_archives_mcp.archives._count import (
+from manna.archives._count import (
     ContainsPoint,
     CountTarget,
     IntersectsRegion,
